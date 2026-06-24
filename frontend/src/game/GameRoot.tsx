@@ -5,6 +5,11 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Stack from "@mui/material/Stack";
 import StepProgress from "./components/StepProgress";
 import type { AnsweredQuestion, QuestionContent, Candidates, CardData,SettingHyperParameterRequest, Hyperparameters,GameRequest,AnswerValue,ConfirmAnswerRequest} from "../type/game";
 import {startGame,answerQuestion,confirmAnswer} from "../api/gameApi"
@@ -12,16 +17,16 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
 
 // calcProgressPercent は候補1位の確率を、ユーザー向けの進行度表示に変換する。
-function calcProgressPercent(candidates : Candidates[],answerThreshold : number|null): number{
-    if(answerThreshold === null){
-        return 0;
-    }
-    const topProbability = candidates[0]?.probability ?? 0;
-    if(answerThreshold <= 0){
+function calcProgressPercent(candidates : Candidates[],answerThreshold : number|null,answeredCount : number): number{
+    if(answerThreshold === null || answerThreshold <= 0){
         return 0;
     }
 
-    return Math.min(100,Math.round((topProbability / answerThreshold) * 100))
+    const topProbability = candidates[0]?.probability ?? 0;
+    const questionProgress = Math.min(answeredCount / 12, 1) * 70;
+    const confidenceProgress = Math.min(topProbability / answerThreshold, 1) * 30;
+
+    return Math.min(95,Math.round(questionProgress + confidenceProgress))
 }
 
 // calcElapsedTime は開始時刻と終了時刻からフィードバック画面用の経過時間を作る。
@@ -83,6 +88,8 @@ function GameRoot() {
     // loading/error はAPI通信中や失敗時の画面表示を制御する。
     const [loading,setLoading] = useState<boolean>(false);
     const [error,setError] = useState<string|null>(null);
+    // helpOpen はヘッダーの使い方ダイアログの表示状態。
+    const [helpOpen,setHelpOpen] = useState<boolean>(false);
     // meta は現在の推理設定。履歴リセットや回答送信でも使い回す。
     const [meta,setMeta] = useState<Hyperparameters|null>(null);
     // answeredQuestions はfrontendが保持する回答履歴。backendへ毎回送る。
@@ -94,7 +101,7 @@ function GameRoot() {
     // answerCard/isCorrect は回答確認からフィードバック画面で使う。
     const [answerCard,setAnswerCard] = useState<CardData|null>(null);
     const [isCorrect,setIsCorrect] = useState<boolean|null>(null);
-    const progressPercent = calcProgressPercent(candidates,meta?.answerThreshold ?? null);
+    const progressPercent = calcProgressPercent(candidates,meta?.answerThreshold ?? null,answeredQuestions.length);
     const questionCount = answeredQuestions.length;
     // startedAt/finishedAt はゲーム終了時に経過時間を出すための時刻。
     const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -425,16 +432,13 @@ function GameRoot() {
 
                     <Box>
                         <Button
-                            component="a"
-                            href=""
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => setHelpOpen(true)}
                         >
                             使い方
                         </Button>
                         <Button
                             component="a"
-                            href=""
+                            href="https://github.com/aurl271/yugioh-akinator-go-react"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -451,6 +455,51 @@ function GameRoot() {
                     </Box>
                 </Toolbar>
             </AppBar>
+
+            <Dialog
+                open={helpOpen}
+                onClose={() => setHelpOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 800 }}>
+                    使い方
+                </DialogTitle>
+                <DialogContent>
+                    <Stack spacing={1.4}>
+                        <Typography variant="body2">
+                            1. 思い浮かべた遊戯王カードを1枚決めます。
+                        </Typography>
+                        <Typography variant="body2">
+                            2. 質問に「はい」「たぶんはい」「わからない」「たぶんいいえ」「いいえ」で答えます。
+                        </Typography>
+                        <Typography variant="body2">
+                            3. 推理が十分進むと、候補カードを1枚表示します。
+                        </Typography>
+                        <Typography variant="body2">
+                            4. 合っているかどうかを教えてください。
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#5f5a66", pt: 1 }}>
+                            回答に迷ったら「わからない」を選んで大丈夫です。少し間違えても遊びやすくしたい場合は「ミスを許容しやすい」を選んでください。
+                        </Typography>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button
+                        variant="contained"
+                        onClick={() => setHelpOpen(false)}
+                        sx={{
+                            bgcolor: "#6d3fa0",
+                            fontWeight: 800,
+                            "&:hover": {
+                                bgcolor: "#5b3387",
+                            },
+                        }}
+                    >
+                        閉じる
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {error !== null && (
                 <Alert severity="error" sx={{ mb: 2 }}>

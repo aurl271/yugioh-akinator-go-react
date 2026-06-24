@@ -34,7 +34,12 @@ func (h *GameHandler) ConfirmAnswerHandler(w http.ResponseWriter, r *http.Reques
 		len(req.AnsweredQuestions),
 	)
 
-	// 将来ここで学習データ保存を追加しても、Handlerの呼び出し先はServiceのままでよい。
+	if h.gameResultRepository != nil {
+		if err := h.gameResultRepository.SaveGameResult(r.Context(), req); err != nil {
+			log.Printf("save game result failed: %v", err)
+		}
+	}
+
 	res, err := h.service.ConfirmAnswer(req)
 	if err != nil {
 		log.Printf("confirm answer: service error: %v", err)

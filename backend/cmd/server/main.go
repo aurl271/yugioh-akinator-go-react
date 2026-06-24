@@ -47,8 +47,9 @@ func main() {
 	}
 
 	// Handler -> Service -> Engine/Repository の順に責務を分ける。
+	gameResultRepository := repository.NewGameResultRepository(db)
 	gameService := game.NewService(gameData)
-	gameHandler := api.NewGameHandler(gameService)
+	gameHandler := api.NewGameHandler(gameService, gameResultRepository)
 
 	// APIのURLはフロントエンド側のgameApi.tsと対応する。
 	mux := http.NewServeMux()
