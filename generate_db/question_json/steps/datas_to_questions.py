@@ -111,6 +111,173 @@ THEME_READING_REPLACEMENTS = {
     "まかいだいほん「": "まかいだいほん",
 }
 
+# cards.cdb の datas.type はビットフラグなので、各ビットが立っているかでカード種別を判定する。
+TYPE_BIT_QUESTIONS = [
+    (1, "モンスターカードですか？"),
+    (2, "魔法カードですか？"),
+    (4, "罠カードですか？"),
+    (16, "通常モンスターですか？"),
+    (32, "効果モンスターですか？"),
+    (64, "融合モンスターですか？"),
+    (128, "儀式モンスターですか？"),
+    (512, "スピリットモンスターですか？"),
+    (1024, "ユニオンモンスターですか？"),
+    (2048, "デュアルモンスターですか？"),
+    (4096, "チューナーモンスターですか？"),
+    (8192, "シンクロモンスターですか？"),
+    (16384, "トークンですか？"),
+    (65536, "速攻魔法カードですか？"),
+    (131072, "永続カードですか？"),
+    (262144, "装備魔法カードですか？"),
+    (524288, "フィールド魔法カードですか？"),
+    (1048576, "カウンター罠カードですか？"),
+    (2097152, "リバースモンスターですか？"),
+    (4194304, "トゥーンモンスターですか？"),
+    (8388608, "エクシーズモンスターですか？"),
+    (16777216, "ペンデュラムモンスターですか？"),
+    (33554432, "メインデッキに入る特殊召喚モンスターですか？"),
+    (67108864, "リンクモンスターですか？"),
+]
+
+# リンクモンスターのdefには、リンクマーカーの向きがビットで入っている。
+LINK_MARKER_QUESTIONS = [
+    (1, "左下向きのリンクマーカーを持つモンスターですか？"),
+    (2, "下向きのリンクマーカーを持つモンスターですか？"),
+    (4, "右下向きのリンクマーカーを持つモンスターですか？"),
+    (8, "左向きのリンクマーカーを持つモンスターですか？"),
+    (32, "右向きのリンクマーカーを持つモンスターですか？"),
+    (64, "左上向きのリンクマーカーを持つモンスターですか？"),
+    (128, "上向きのリンクマーカーを持つモンスターですか？"),
+    (256, "右上向きのリンクマーカーを持つモンスターですか？"),
+]
+
+RACE_BIT_QUESTIONS = [
+    (1, "戦士族のモンスターですか？"),
+    (2, "魔法使い族のモンスターですか？"),
+    (4, "天使族のモンスターですか？"),
+    (8, "悪魔族のモンスターですか？"),
+    (16, "アンデット族のモンスターですか？"),
+    (32, "機械族のモンスターですか？"),
+    (64, "水族のモンスターですか？"),
+    (128, "炎族のモンスターですか？"),
+    (256, "岩石族のモンスターですか？"),
+    (512, "鳥獣族のモンスターですか？"),
+    (1024, "植物族のモンスターですか？"),
+    (2048, "昆虫族のモンスターですか？"),
+    (4096, "雷族のモンスターですか？"),
+    (8192, "ドラゴン族のモンスターですか？"),
+    (16384, "獣族のモンスターですか？"),
+    (32768, "獣戦士族のモンスターですか？"),
+    (65536, "恐竜族のモンスターですか？"),
+    (131072, "魚族のモンスターですか？"),
+    (262144, "海竜族のモンスターですか？"),
+    (524288, "爬虫類族のモンスターですか？"),
+    (1048576, "サイキック族のモンスターですか？"),
+    (2097152, "幻神獣族のモンスターですか？"),
+    (4194304, "創造神族のモンスターですか？"),
+    (8388608, "幻竜族のモンスターですか？"),
+    (16777216, "サイバース族のモンスターですか？"),
+    (33554432, "幻想魔族のモンスターですか？"),
+]
+
+ATTRIBUTE_BIT_QUESTIONS = [
+    (1, "地属性のモンスターですか？"),
+    (2, "水属性のモンスターですか？"),
+    (4, "炎属性のモンスターですか？"),
+    (8, "風属性のモンスターですか？"),
+    (16, "光属性のモンスターですか？"),
+    (32, "闇属性のモンスターですか？"),
+    (64, "神属性のモンスターですか？"),
+]
+
+TEXT_CONTAINS_QUESTIONS = [
+    "１ターンに１度",
+    "メインフェイズ",
+    "このカード",
+    "攻撃力",
+    "発動するターン",
+    "自分フィールド",
+    "モンスター",
+    "魔法",
+    "罠",
+    "自分の墓地",
+    "レベル",
+    "対象",
+    "特殊召喚",
+    "無効",
+    "エンドフェイズ",
+    "スタンバイフェイズ",
+    "バトルフェイズ",
+    "ドローフェイズ",
+    "破壊",
+    "効果",
+    "デッキ",
+    "ドロー",
+    "ターン終了時まで",
+    "相手",
+    "自分",
+    "戦闘",
+    "ダメージステップ",
+    "墓地",
+    "除外",
+    "召喚",
+    "トークン",
+    "コントローラー",
+    "コントロール",
+    "リバース",
+    "フィールド",
+    "守備表示",
+    "表側表示",
+    "攻撃表示",
+    "相手の効果",
+    "直接攻撃",
+    "リリース",
+    "１ターンに１枚しか発動できない",
+    "攻撃",
+    "場合",
+    "任意",
+    "手札",
+    "手札に加える",
+    "魔法・罠カード",
+    "装備",
+    "攻撃宣言",
+    "儀式",
+    "手札から特殊召喚",
+    "ルール上",
+    "発動を無効",
+    "セット",
+    "捨て",
+    "裏側表示",
+    "発動",
+    "種族",
+    "属性",
+    "素材",
+    "縦列",
+    "存在",
+    "融合",
+    "サイコロ",
+    "フィールドから離れた場合",
+    "回復",
+    "デュエル",
+    "チューナー",
+    "攻撃対象",
+    "フィールドゾーン",
+    "宣言",
+    "効果を無効",
+    "お互い",
+    "元々",
+    "順番",
+    "効果処理",
+    "確認",
+    "チェーン",
+    "発動できない",
+    "同名",
+    "魔法＆罠ゾーン",
+    "同じ",
+    "Ｘ素材",
+    "コイントス",
+]
+
 
 def _condition(logic: str, conditions: list[dict[str, Any]]) -> dict[str, Any]:
     return {
@@ -137,6 +304,99 @@ def _fetch_values(cards_db_path: Path, sql: str) -> list[int]:
 def build_datas_questions(cards_db_path: Path) -> QuestionMap:
     """cards.cdb の datas テーブルから、数値で判定できる質問を作る。"""
     questions: QuestionMap = {}
+
+    for type_bit, question_text in TYPE_BIT_QUESTIONS:
+        questions[question_text] = {
+            "query": f"type & {type_bit} != 0",
+            "condition": _condition(
+                "and",
+                [
+                    _field_condition("type", "bit_on", value=type_bit),
+                ],
+            ),
+            "unset_bit": 0,
+            "new_state": 0,
+        }
+
+    questions["永続魔法カードですか？"] = {
+        "query": "type & 131074 != 0",
+        "condition": _condition(
+            "and",
+            [
+                _field_condition("type", "bit_on", value=2),
+                _field_condition("type", "bit_on", value=131072),
+            ],
+        ),
+        "unset_bit": 0,
+        "new_state": 0,
+    }
+    questions["永続罠カードですか？"] = {
+        "query": "type & 131076 != 0",
+        "condition": _condition(
+            "and",
+            [
+                _field_condition("type", "bit_on", value=4),
+                _field_condition("type", "bit_on", value=131072),
+            ],
+        ),
+        "unset_bit": 0,
+        "new_state": 0,
+    }
+
+    for marker_bit, question_text in LINK_MARKER_QUESTIONS:
+        questions[question_text] = {
+            "query": f"type & 67108864 != 0 AND def & {marker_bit} != 0",
+            "condition": _condition(
+                "and",
+                [
+                    _field_condition("type", "bit_on", value=67108864),
+                    _field_condition("def", "bit_on", value=marker_bit),
+                ],
+            ),
+            "unset_bit": 0,
+            "new_state": 0,
+        }
+
+    for race_bit, question_text in RACE_BIT_QUESTIONS:
+        questions[question_text] = {
+            "query": f"type & 1 != 0 AND race & {race_bit} != 0",
+            "condition": _condition(
+                "and",
+                [
+                    _field_condition("type", "bit_on", value=1),
+                    _field_condition("race", "bit_on", value=race_bit),
+                ],
+            ),
+            "unset_bit": 0,
+            "new_state": 0,
+        }
+
+    for attribute_bit, question_text in ATTRIBUTE_BIT_QUESTIONS:
+        questions[question_text] = {
+            "query": f"type & 1 != 0 AND attribute & {attribute_bit} != 0",
+            "condition": _condition(
+                "and",
+                [
+                    _field_condition("type", "bit_on", value=1),
+                    _field_condition("attribute", "bit_on", value=attribute_bit),
+                ],
+            ),
+            "unset_bit": 0,
+            "new_state": 0,
+        }
+
+    for text in TEXT_CONTAINS_QUESTIONS:
+        questions[f"テキストに「{text}」を含むカードですか？"] = {
+            "query": f"desc LIKE '%{text}%'",
+            "condition": _condition(
+                "and",
+                [
+                    _field_condition("desc", "contains", text=text),
+                ],
+            ),
+            "unset_bit": 0,
+            "new_state": 0,
+        }
 
     atk_values = _fetch_values(cards_db_path, "SELECT DISTINCT atk FROM datas ORDER BY atk")
     def_values = _fetch_values(

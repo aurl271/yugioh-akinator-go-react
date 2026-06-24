@@ -13,7 +13,7 @@ const (
 	// QuestionCategoryScript はanswersテーブルにYESカードを持つ質問。
 	QuestionCategoryScript = 0
 	// QuestionCategoryCards はcardsテーブルの条件からYES/NOを生成する質問。
-	QuestionCategoryCards  = 1
+	QuestionCategoryCards = 1
 )
 
 // RawAnswer はanswersテーブルから読み取った1行分の生データ。
@@ -25,12 +25,15 @@ type RawAnswer struct {
 
 const (
 	// CardField* はcondition_jsonのfieldで使えるカード列名。
-	CardFieldType    = "type"
-	CardFieldAtk     = "atk"
-	CardFieldDef     = "def"
-	CardFieldLevel   = "level"
-	CardFieldSetcode = "setcode"
-	CardFieldReading = "reading"
+	CardFieldType      = "type"
+	CardFieldAtk       = "atk"
+	CardFieldDef       = "def"
+	CardFieldLevel     = "level"
+	CardFieldSetcode   = "setcode"
+	CardFieldReading   = "reading"
+	CardFieldRace      = "race"
+	CardFieldAttribute = "attribute"
+	CardFieldDesc      = "desc"
 )
 
 const (
@@ -43,6 +46,7 @@ const (
 	ConditionOpShiftMaskEq = "shift_mask_eq"
 	ConditionOpStartsWith  = "starts_with"
 	ConditionOpEndsWith    = "ends_with"
+	ConditionOpContains    = "contains"
 )
 
 // LoadGameData は推理に必要なDBデータをまとめて読み込み、Engineが使う形へ変換する。
@@ -382,6 +386,11 @@ func matchNumberCondition(card game.Card, item game.ConditionItem) (bool, error)
 			return false, fmt.Errorf("condition op %s requires field %s", item.Op, CardFieldReading)
 		}
 		return strings.HasSuffix(card.Reading, item.Text), nil
+	case ConditionOpContains:
+		if item.Field != CardFieldDesc {
+			return false, fmt.Errorf("condition op %s requires field %s", item.Op, CardFieldDesc)
+		}
+		return strings.Contains(card.Desc, item.Text), nil
 	}
 	return false, fmt.Errorf("unknown condition op: %s", item.Op)
 }
@@ -399,6 +408,10 @@ func cardFieldValue(card game.Card, field string) (int64, error) {
 		return int64(card.Level), nil
 	case CardFieldSetcode:
 		return card.Setcode, nil
+	case CardFieldRace:
+		return card.Race, nil
+	case CardFieldAttribute:
+		return card.Attribute, nil
 	default:
 		return 0, fmt.Errorf("unknown field: %s", field)
 	}
