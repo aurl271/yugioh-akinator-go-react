@@ -6,11 +6,18 @@ generate_db/source_data/
 __pycache__/
 *.pyc
 YugiohAkinator-master.zip
+.codex/
+.agents/
+
+docs/
 
 # Go
 .gocache/
 backend/server
 backend/*.exe
+backend/output/
+backend/cmd/dbtest/
+backend/cmd/questioncheck/
 
 # Frontend
 frontend/node_modules/

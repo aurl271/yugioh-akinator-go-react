@@ -13,17 +13,20 @@ PYTHON = sys.executable
 
 
 def run_step(name: str, command: list[str]) -> None:
+    """PostgreSQL準備の各ステップを表示付きで実行する。"""
     print(f"\n== {name} ==", flush=True)
     subprocess.run(command, cwd=BASE_DIR.parent, check=True)
 
 
 def parse_args() -> argparse.Namespace:
+    """CSV生成だけで止めるか、PostgreSQLへのimportまで行うかを読む。"""
     parser = argparse.ArgumentParser(description="Prepare PostgreSQL import files and optionally import them.")
     parser.add_argument("--skip-import", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
+    """SQLiteからCSVを書き出し、必要ならPostgreSQLへ取り込む入口。"""
     args = parse_args()
 
     run_step("export csv from sqlite", [PYTHON, str(STEPS_DIR / "export_csv_from_sqlite.py")])

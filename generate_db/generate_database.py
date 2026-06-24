@@ -77,10 +77,12 @@ NAME_READING_JSON = "source_data/json/CardPool.json"
 
 
 def log(message):
+    # 生成ログはstdoutのJSON等と混ざらないようstderrへ出す。
     print(message, file=sys.stderr)
 
 
 def format_elapsed(start_time):
+    # perf_counterの開始時刻から経過秒数の表示文字列を作る。
     return f"{time.perf_counter() - start_time:.2f}s"
 
 
@@ -125,6 +127,7 @@ class CardDb:
         self.cdbcursor = self.cdbconn.cursor()
         
     def read_json(self,filepath):
+        # 質問定義や読み仮名JSONをPythonオブジェクトとして読み込む。
         try:
             #jsonの読み込み
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -134,6 +137,7 @@ class CardDb:
             print(f"json読み込みエラー: {e}")
 
     def build_name_to_reading(self):
+        # CardPool.jsonのカード名と読み仮名を、名前から引ける辞書に変換する。
         name_to_reading = {}
         for card in self.name_reading_json["cards"]:
             if "name" not in card or "ruby" not in card:
@@ -190,12 +194,14 @@ class CardDb:
             print(f"データベース生成時にエラーが発生しました: {e}")
 
     def add_column_if_missing(self, table_name, column_name, column_definition):
+        # 既存DBを再利用する場合でも、足りない列だけを安全に追加する。
         self.cursor.execute(f"PRAGMA table_info({table_name})")
         columns = [row[1] for row in self.cursor.fetchall()]
         if column_name not in columns:
             self.cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}")
 
     def table_count(self, table_name):
+        # 生成ログで差分件数を出すため、指定テーブルの行数を数える。
         self.cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
         return self.cursor.fetchone()[0]
 
@@ -429,6 +435,7 @@ class CardDb:
             print(f"cards.cdb 読み込みエラー: {e}")
 
     def close(self):
+        # SQLite接続を閉じる前に残りの変更をcommitする。
         self.conn.commit()
         self.cdbconn.commit()
         #閉じる

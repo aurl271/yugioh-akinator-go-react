@@ -5,14 +5,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"yugioh-akinator-backend/internal/game"
 )
 
 const (
+	// QuestionCategoryScript はanswersテーブルにYESカードを持つ質問。
 	QuestionCategoryScript = 0
+	// QuestionCategoryCards はcardsテーブルの条件からYES/NOを生成する質問。
 	QuestionCategoryCards  = 1
 )
 
+// RawAnswer はanswersテーブルから読み取った1行分の生データ。
 type RawAnswer struct {
 	QuestionID int
 	CardID     int64
@@ -20,22 +24,28 @@ type RawAnswer struct {
 }
 
 const (
+	// CardField* はcondition_jsonのfieldで使えるカード列名。
 	CardFieldType    = "type"
 	CardFieldAtk     = "atk"
 	CardFieldDef     = "def"
 	CardFieldLevel   = "level"
 	CardFieldSetcode = "setcode"
+	CardFieldReading = "reading"
 )
 
 const (
+	// ConditionOp* はcondition_jsonのopで使える判定演算子。
 	ConditionOpEq          = "eq"
 	ConditionOpBetween     = "between"
 	ConditionOpBitOn       = "bit_on"
 	ConditionOpBitOff      = "bit_off"
 	ConditionOpBitMaskEq   = "bit_mask_eq"
 	ConditionOpShiftMaskEq = "shift_mask_eq"
+	ConditionOpStartsWith  = "starts_with"
+	ConditionOpEndsWith    = "ends_with"
 )
 
+// LoadGameData は推理に必要なDBデータをまとめて読み込み、Engineが使う形へ変換する。
 func LoadGameData(ctx context.Context, db *sql.DB) (game.GameData, error) {
 	cards, err := LoadCards(ctx, db)
 	if err != nil {
@@ -63,6 +73,7 @@ func LoadGameData(ctx context.Context, db *sql.DB) (game.GameData, error) {
 	}, nil
 }
 
+// LoadCards はcardsテーブルをGameData用のCard一覧へ変換する。
 func LoadCards(ctx context.Context, db *sql.DB) ([]game.Card, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT
@@ -127,6 +138,7 @@ func LoadCards(ctx context.Context, db *sql.DB) ([]game.Card, error) {
 	return cards, nil
 }
 
+// LoadQuestions はquestionsテーブルを読み込み、condition_jsonを構造体へ戻す。
 func LoadQuestions(ctx context.Context, db *sql.DB) ([]game.Question, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT
@@ -184,6 +196,7 @@ func LoadQuestions(ctx context.Context, db *sql.DB) ([]game.Question, error) {
 	return questions, nil
 }
 
+// LoadAnswers はscript由来質問のYESカードをanswersテーブルから読み込む。
 func LoadAnswers(ctx context.Context, db *sql.DB) ([]RawAnswer, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT
@@ -222,6 +235,8 @@ func LoadAnswers(ctx context.Context, db *sql.DB) ([]RawAnswer, error) {
 	return answers, nil
 }
 
+// buildAnswers はscript由来answersとcards条件由来answersを1つのmapへまとめる。
+// cards条件由来の質問はDBに全回答を保存せず、Go側でconditionからYESカードを生成する。
 func buildAnswers(
 	questions []game.Question,
 	cards []game.Card,
@@ -260,6 +275,7 @@ func buildAnswers(
 	return answers, nil
 }
 
+// matchCondition はCondition全体のand/orを評価する。
 func matchCondition(card game.Card, condition game.Condition) (bool, error) {
 	switch condition.Logic {
 	case "and":
@@ -289,47 +305,88 @@ func matchCondition(card game.Card, condition game.Condition) (bool, error) {
 	}
 }
 
+// matchConditionItem はConditionItemを1つ評価する入口。
 func matchConditionItem(card game.Card, item game.ConditionItem) (bool, error) {
-	value, err := cardFieldValue(card, item.Field)
-	if err != nil {
-		return false, err
+	return matchNumberCondition(card, item)
+}
+
+// matchNumberCondition は数値条件とreading文字列条件を評価する。
+// 名前は歴史的にNumberだが、starts_with/ends_withもここで扱っている。
+func matchNumberCondition(card game.Card, item game.ConditionItem) (bool, error) {
+	numberValue := func() (int64, error) {
+		return cardFieldValue(card, item.Field)
 	}
 
 	switch item.Op {
 	case ConditionOpEq:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if value == item.Value {
 			return true, nil
 		}
 		return false, nil
 	case ConditionOpBetween:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if item.Min <= value && value <= item.Max {
 			return true, nil
 		}
 		return false, nil
 	case ConditionOpBitOn:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if value&item.Value != 0 {
 			return true, nil
 		}
 		return false, nil
 	case ConditionOpBitOff:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if value&item.Value == 0 {
 			return true, nil
 		}
 		return false, nil
 	case ConditionOpBitMaskEq:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if value&item.Mask == item.Value {
 			return true, nil
 		}
 		return false, nil
 	case ConditionOpShiftMaskEq:
+		value, err := numberValue()
+		if err != nil {
+			return false, err
+		}
 		if (value>>item.Shift)&item.Mask == item.Value {
 			return true, nil
 		}
 		return false, nil
+	case ConditionOpStartsWith:
+		if item.Field != CardFieldReading {
+			return false, fmt.Errorf("condition op %s requires field %s", item.Op, CardFieldReading)
+		}
+		return strings.HasPrefix(card.Reading, item.Text), nil
+	case ConditionOpEndsWith:
+		if item.Field != CardFieldReading {
+			return false, fmt.Errorf("condition op %s requires field %s", item.Op, CardFieldReading)
+		}
+		return strings.HasSuffix(card.Reading, item.Text), nil
 	}
 	return false, fmt.Errorf("unknown condition op: %s", item.Op)
 }
 
+// cardFieldValue はConditionItem.FieldをCardの数値フィールドへ対応させる。
 func cardFieldValue(card game.Card, field string) (int64, error) {
 	switch field {
 	case CardFieldType:
@@ -347,6 +404,7 @@ func cardFieldValue(card game.Card, field string) (int64, error) {
 	}
 }
 
+// buildQuestionByID は回答履歴のquestion idからQuestionを高速に引くためのmapを作る。
 func buildQuestionByID(questions []game.Question) map[int]game.Question {
 	questionByID := make(map[int]game.Question, len(questions))
 	for _, question := range questions {

@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_CQA_DB = BASE_DIR / "output" / "CQA.db"
 DEFAULT_OUTPUT_DIR = BASE_DIR / "postgres" / "csv"
 
+# TABLES はPostgreSQLへ移す対象テーブルと、CSVへ出す列順を定義する。
 TABLES = {
     "cards": [
         "id",
@@ -44,6 +45,7 @@ TABLES = {
 
 
 def export_table(conn: sqlite3.Connection, table_name: str, columns: list[str], output_dir: Path) -> int:
+    """指定テーブルをCSVへ書き出し、出力した行数を返す。"""
     output_path = output_dir / f"{table_name}.csv"
     column_sql = ", ".join(columns)
     query = f"SELECT {column_sql} FROM {table_name} ORDER BY id"
@@ -61,6 +63,7 @@ def export_table(conn: sqlite3.Connection, table_name: str, columns: list[str], 
 
 
 def export_csv_from_sqlite(cqa_db: Path, output_dir: Path) -> None:
+    """CQA.db内の主要テーブルをPostgreSQL import用CSVへ変換する。"""
     if not cqa_db.exists():
         raise FileNotFoundError(f"CQA database not found: {cqa_db}")
 
@@ -73,6 +76,7 @@ def export_csv_from_sqlite(cqa_db: Path, output_dir: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """入力SQLite DBとCSV出力先のCLI引数を読む。"""
     parser = argparse.ArgumentParser(description="Export CQA.db tables to CSV files for PostgreSQL import.")
     parser.add_argument("--cqa-db", type=Path, default=DEFAULT_CQA_DB)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
@@ -80,6 +84,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """CLIからCSV export処理を実行する入口。"""
     args = parse_args()
     export_csv_from_sqlite(args.cqa_db, args.output_dir)
 

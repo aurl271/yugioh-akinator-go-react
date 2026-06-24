@@ -1,12 +1,115 @@
 from __future__ import annotations
 
 import difflib
+import json
 import sqlite3
 from pathlib import Path
 from typing import Any
 
 
 QuestionMap = dict[str, dict[str, Any]]
+
+
+FIXED_THEME_READINGS = {
+    12296: "エレメンタルヒーロー",
+    4373: "せんとうき",
+    4288: "ひょういそうちゃく",
+    4109: "エックス-セイバー",
+    468: "エニアクラフト",
+    442: "メタルか",
+    432: "デモンスミス",
+    290: "ワルキューレ",
+    276: "くうがだん",
+    271: "ヴァレル",
+    192: "ひょうい",
+    191: "れいつかい",
+    115: "エクシーズ",
+    124: "えんぶ",
+    154: "ちょうじゅうむしゃ",
+    164: "クリボー",
+    188: "じんぞうにんげん",
+    189: "あんこくきしガイア",
+    239: "だてんし",
+    43: "にんじゃ",
+    52: "ほうぎょく",
+    86: "インゼクター",
+    97: "にんぽう",
+    20602: "えんせいきし",
+}
+
+FIXED_MATCHED_SETCODES = {
+    8: {
+        8,
+        12296,
+        20488,
+        24584,
+        40968,
+        49160,
+        614408,
+        1454088,
+        13578248,
+        19070984,
+        19095560,
+        25440264,
+        38668283912,
+        1666447912968,
+        1666473799688,
+    },
+    9: {9, 614408, 4587529, 38668283912, 1666447912968},
+    19: {19, 12307, 20499, 24595, 1519635},
+    155: {155, 4251},
+    158: {158, 12845214},
+    165: {
+        165,
+        1507493,
+        9568421,
+        10813442,
+        10813465,
+        10813507,
+        10813525,
+        10813554,
+        10813555,
+        10813599,
+        10817667,
+        269942949,
+        708946100309,
+    },
+    180: {180, 12845236, 55847420084},
+    211: {211},
+    227: {227},
+    238: {238, 4334, 8430},
+    239: {239},
+    265: {265},
+    383: {383},
+    427: {427},
+    425: {425},
+    424: {424},
+    304: {304, 4400},
+    310: {310, 4587830},
+}
+
+SKIPPED_SETCODES = {
+    35,
+    5439644,
+    602120,
+    281018559,
+    276758600,
+    276762696,
+}
+
+LEADING_THEME_CHARS = {"・"}
+TRAILING_THEME_CHARS = {"・", " ", "-"}
+
+THEME_READING_REPLACEMENTS = {
+    "霞の谷の": "霞の谷",
+    "しんらの": "しんら",
+    "のこわくま": "こわくま",
+    "れいじゅうの": "れいじゅう",
+    "サブテラーの": "サブテラー",
+    "はかもりの": "はかもり",
+    "ミスト・バレーの": "ミスト・バレー",
+    "まかいだいほん「": "まかいだいほん",
+}
 
 
 def _condition(logic: str, conditions: list[dict[str, Any]]) -> dict[str, Any]:
@@ -138,211 +241,65 @@ def build_datas_questions(cards_db_path: Path) -> QuestionMap:
     return questions
 
 
-USED_LEGACY_SETCODES = {
-    2,
-    7,
-    11,
-    12,
-    23,
-    25,
-    27,
-    30,
-    31,
-    35,
-    37,
-    38,
-    43,
-    52,
-    54,
-    56,
-    58,
-    59,
-    68,
-    69,
-    70,
-    82,
-    83,
-    85,
-    86,
-    97,
-    111,
-    113,
-    115,
-    123,
-    126,
-    127,
-    137,
-    147,
-    149,
-    156,
-    157,
-    163,
-    164,
-    165,
-    170,
-    172,
-    173,
-    186,
-    191,
-    196,
-    198,
-    207,
-    219,
-    220,
-    221,
-    223,
-    226,
-    229,
-    234,
-    242,
-    243,
-    268,
-    273,
-    274,
-    277,
-    281,
-    283,
-    284,
-    290,
-    291,
-    298,
-    301,
-    308,
-    317,
-    320,
-    325,
-    336,
-    340,
-    345,
-    347,
-    352,
-    356,
-    378,
-    381,
-    385,
-    390,
-    392,
-    393,
-    395,
-    400,
-    401,
-    406,
-    407,
-    411,
-    412,
-    418,
-    419,
-    430,
-    432,
-    442,
-    444,
-    448,
-    453,
-    717,
-    4288,
-    4316,
-    4373,
-    20602,
-    4260113,
-    281018559,
-}
+def _load_json(path: Path) -> Any:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
 
-LEGACY_CATEGORY_NAMES = [
-    [2, "ジェネクス"],
-    [11, "インフェルニティ"],
-    [12, "エーリアン"],
-    [23, "シンクロ"],
-    [29, "コアキメイル"],
-    [31, "ネオスペーシアン", "Ｎ"],
-    [35, "Ｓｉｎ"],
-    [43, "忍者"],
-    [52, "宝玉"],
-    [54, "マシンナーズ"],
-    [56, "ライトロード"],
-    [58, "リチュア"],
-    [59, "レッドアイズ", "真紅眼"],
-    [68, "代行者"],
-    [69, "デーモン"],
-    [70, "融合", "フュージョン"],
-    [82, "ガーディアン"],
-    [83, "セイクリッド"],
-    [85, "フォトン"],
-    [86, "甲虫装機"],
-    [97, "忍法"],
-    [111, "ヒロイック", "Ｈ－Ｃ"],
-    [113, "マドルチェ"],
-    [115, "エクシーズ", "ＣＸ", "レイ・ピアース"],
-    [123, "ギャラクシー", "銀河"],
-    [126, "炎舞"],
-    [127, "ホープ"],
-    [147, "サイバー"],
-    [149, "ＲＵＭ"],
-    [156, "テラナイト", "星因子", "星輝士"],
-    [157, "シャドール", "影依", "神の写し身との接触", "魂写しの同化"],
-    [163, "スターダスト"],
-    [164, "クリボー"],
-    [165, "チェンジ", "紋章変換"],
-    [170, "クリフォート"],
-    [172, "ゴブリン", "百鬼羅刹"],
-    [173, "デストーイ", "魔玩具"],
-    [186, "ＲＲ", "レイド・ラプターズ", "Ｒ・Ｒ・Ｒ", "レイダーズ・アンブレイカブル・マインド"],
-    [191, "霊使い"],
-    [196, "セフィラ"],
-    [198, "Ｅｍ"],
-    [207, "カオス", "混沌", "", "ヌメロニアス・ヌメロニア", "ＣＨＡＯＳ", "ＣＸ", "ＣＮ"],
-    [219, "ファントム", "幻影"],
-    [220, "超量"],
-    [221, "ブルーアイズ", "青眼"],
-    [223, "月光"],
-    [226, "トラミッド"],
-    [229, "サイファー", "光波"],
-    [234, "クリストロン", "水晶機巧"],
-    [242, "ペンデュラム", "軌跡の魔術師", "奇跡の魔導剣士", "ドラゴニックＰ", "竜剣士マスター", "竜剣士ラスター", "竜魔王ベクター", "竜魔王レクター"],
-    [243, "プレデター", "捕食"],
-    [268, "ジャックナイツ", "機界騎士", "宵星の騎士", "明星の機械騎士", "双穹の騎士アストラム"],
-    [273, "アームド・ドラゴン", "武装竜"],
-    [274, "トロイメア", "夢幻転星イドリース", "夢幻崩界イヴリース"],
-    [277, "閃刀", "未来の柱－キアノス", "智の賢者－ヒンメル", "閃術兵器－.", "慈愛の賢者－シエラ", "エルロン", "武の賢者－アーカス"],
-    [281, "サラマングレイト", "転生炎獣", "フュージョン・オブ・ファイア", "フューリー・オブ・ファイア", "ライジング・オブ・ファイア"],
-    [283, "オルフェゴール", "宵星の機神", "宵星の騎士"],
-    [284, "サンダー・ドラゴン", "雷龍"],
-    [290, "ワルキューレ", "戦乙女の戦車", "運命の戦車", "Ｗａｌｋｕｒｅｎ"],
-    [291, "ローズ"],
-    [298, "エンディミオン", "魔法都市の実験施設"],
-    [301, "シムルグ"],
-    [320, "アダマシア", "魔救"],
-    [325, "ドラグマ", "凶導", "教導", "白の枢機竜", "烙印の命数", "導きの聖女クエム"],
-    [336, "マギストス", "聖月の魔導士エンディミオン", "聖魔の大賢者エンディミオン"],
-    [340, "ドライトロン", "輝巧", "竜儀巧"],
-    [356, "デスピア", "導きの聖女クエム", "導きの聖女クエム"],
-    [378, "スケアクロー", "肆世壊"],
-    [381, "ヴァリアンツ"],
-    [382, "ラビュリンス", "白銀の城"],
-    [385, "ティアラメンツ", "壱世壊"],
-    [393, "クシャトリラ", "六世壊"],
-    [400, "マナドゥム", "伍世壊"],
-    [407, "レシピ"],
-    [411, "ディアベル", "蛇眼の大炎魔"],
-    [412, "スネークアイ", "蛇眼"],
-    [430, "千年", "ミレニアム"],
-    [442, "メタル化"],
-    [444, "アザミナ"],
-    [453, "リゼェネシス", "再世"],
-    [717, "アルトメギア", "神芸"],
-    [4316, "超量士"],
-    [4373, "閃刀姫"],
-    [20602, "焔聖騎士"],
-]
+def _load_readings(card_pool_json_path: Path) -> tuple[dict[int, str], dict[str, str]]:
+    card_id_to_reading: dict[int, str] = {}
+    name_to_reading: dict[str, str] = {}
+
+    card_pool = _load_json(card_pool_json_path)
+    for card in card_pool.get("cards", []):
+        reading = card.get("ruby", "")
+        if not reading:
+            continue
+        card_id_to_reading[int(card["id"])] = reading
+        name_to_reading[card["name"]] = reading
+
+    json_dir = card_pool_json_path.parent
+    for filename in ("official_readings_cache.json", "manual_readings.json"):
+        readings = _load_json(json_dir / filename)
+        for card_id, reading in readings.items():
+            if reading:
+                card_id_to_reading[int(card_id)] = reading
+
+    return card_id_to_reading, name_to_reading
 
 
-def build_legacy_setcode_questions(cards_db_path: Path) -> QuestionMap:
-    """旧 datas_to_json.py のコメントアウト部分を再現する。
+def _longest_common_part(readings: list[str]) -> str:
+    if not readings:
+        return ""
 
-    元コードでは JSON として完成した形ではなく、テーマ名と query だけを出力していた。
-    そのため、この関数も通常の生成には混ぜず、setcode 質問を作り直すための材料として残す。
-    """
-    categories = [list(category) for category in LEGACY_CATEGORY_NAMES]
+    common = readings[0]
+    for reading in readings[1:]:
+        matcher = difflib.SequenceMatcher(None, common, reading)
+        match = matcher.find_longest_match(0, len(common), 0, len(reading))
+        common = common[match.a : match.a + match.size]
+        if not common:
+            return ""
+
+    return common
+
+
+def _normalize_theme_reading(reading: str) -> str:
+    normalized = reading.strip()
+    while normalized and normalized[0] in LEADING_THEME_CHARS:
+        normalized = normalized[1:].strip()
+    while normalized and normalized[-1] in TRAILING_THEME_CHARS:
+        normalized = normalized[:-1].strip()
+    return THEME_READING_REPLACEMENTS.get(normalized, normalized)
+
+
+def build_legacy_setcode_questions(
+    cards_db_path: Path,
+    card_pool_json_path: Path,
+) -> QuestionMap:
+    """setcode ごとの reading 共通部分から、setcode 質問を作る。"""
+    card_id_to_reading, name_to_reading = _load_readings(card_pool_json_path)
 
     with sqlite3.connect(cards_db_path) as conn:
         cursor = conn.cursor()
@@ -357,49 +314,57 @@ def build_legacy_setcode_questions(cards_db_path: Path) -> QuestionMap:
         )
         card_rows = cursor.fetchall()
 
-    names_by_setcode: dict[int, list[str]] = {}
-    setcode_by_id: dict[int, int] = {}
-    all_names: list[tuple[int, str]] = []
+    cards: list[dict[str, Any]] = []
+    readings_by_setcode: dict[int, list[str]] = {}
 
     for card_id, setcode, name in card_rows:
-        names_by_setcode.setdefault(setcode, []).append(name)
-        setcode_by_id[card_id] = setcode
-        all_names.append((card_id, name))
-
-    for setcode in sorted(names_by_setcode):
-        if setcode in USED_LEGACY_SETCODES:
+        reading = card_id_to_reading.get(card_id) or name_to_reading.get(name, "")
+        if not reading:
             continue
 
-        card_names = names_by_setcode[setcode]
-        if len(card_names) < 5:
-            continue
-
-        theme_name = card_names[0]
-        for card_name in card_names:
-            matcher = difflib.SequenceMatcher(None, theme_name, card_name)
-            match = matcher.find_longest_match(0, len(theme_name), 0, len(card_name))
-            theme_name = theme_name[match.a : match.a + match.size]
-
-        if theme_name:
-            categories.append([setcode, theme_name])
+        card = {
+            "card_id": card_id,
+            "setcode": setcode,
+            "name": name,
+            "reading": reading,
+        }
+        cards.append(card)
+        readings_by_setcode.setdefault(setcode, []).append(reading)
 
     questions: QuestionMap = {}
-    for category in categories:
-        setcodes = {category[0]}
-        for category_name in category[1:]:
-            if not category_name:
-                continue
+    used_theme_readings: set[str] = set()
 
-            for card_id, card_name in all_names:
-                if category_name in card_name:
-                    setcodes.add(setcode_by_id[card_id])
+    for setcode in sorted(readings_by_setcode):
+        if setcode in SKIPPED_SETCODES:
+            continue
 
-        query = " OR ".join(f"setcode = {setcode}" for setcode in sorted(setcodes))
-        questions[f"「{category[1]}」カードですか？(テキストにルール上「～」カードとして扱う場合も含む)"] = {
+        readings = readings_by_setcode[setcode]
+        if len(readings) < 5:
+            continue
+
+        raw_theme_reading = FIXED_THEME_READINGS.get(setcode) or _longest_common_part(readings)
+        theme_reading = _normalize_theme_reading(raw_theme_reading)
+        if not theme_reading or theme_reading in used_theme_readings:
+            continue
+
+        used_theme_readings.add(theme_reading)
+        if setcode in FIXED_MATCHED_SETCODES:
+            matched_setcodes = FIXED_MATCHED_SETCODES[setcode]
+        else:
+            matched_setcodes = {
+                card["setcode"]
+                for card in cards
+                if card["setcode"] >= setcode
+                and card["setcode"] not in SKIPPED_SETCODES
+                and theme_reading in card["reading"]
+            }
+
+        query = " OR ".join(f"setcode = {matched_setcode}" for matched_setcode in sorted(matched_setcodes))
+        questions[f"「{theme_reading}」カードですか？"] = {
             "query": query,
             "condition": _condition(
                 "or",
-                [_field_condition("setcode", "eq", value=setcode) for setcode in sorted(setcodes)],
+                [_field_condition("setcode", "eq", value=matched_setcode) for matched_setcode in sorted(matched_setcodes)],
             ),
             "unset_bit": 0,
             "new_state": 0,

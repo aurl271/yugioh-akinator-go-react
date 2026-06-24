@@ -15,18 +15,22 @@ QuestionMap = dict[str, dict[str, Any]]
 
 
 def log(message: str) -> None:
+    """進捗ログを標準エラーへ出す。"""
     print(message, file=sys.stderr)
 
 
 def default_cards_db_path() -> Path:
+    """既定のcards.cdbパスを返す。"""
     return Path(__file__).resolve().parents[1] / "source_data" / "cards.cdb"
 
 
 def default_card_pool_json_path() -> Path:
+    """既定のCardPool.jsonパスを返す。"""
     return Path(__file__).resolve().parents[1] / "source_data" / "json" / "CardPool.json"
 
 
 def run_generation_step(name: str, questions: QuestionMap, builder) -> None:
+    """質問生成関数を実行し、追加件数と処理時間をログに出す。"""
     before_count = len(questions)
     start_time = time.perf_counter()
     log(f"[start] {name}")
@@ -39,15 +43,27 @@ def run_generation_step(name: str, questions: QuestionMap, builder) -> None:
     log(f"[done]  {name}: +{added_count} questions ({elapsed:.2f}s)")
 
 
-def build_generated_questions(cards_db_path: Path, card_pool_json_path: Path) -> QuestionMap:
+def build_generated_questions(
+    cards_db_path: Path,
+    card_pool_json_path: Path,
+) -> QuestionMap:
+    """datas・setcode・読み仮名から作れる質問を1つの辞書へまとめる。"""
     questions: QuestionMap = {}
     run_generation_step("datas questions", questions, lambda: build_datas_questions(cards_db_path))
-    run_generation_step("setcode questions", questions, lambda: build_legacy_setcode_questions(cards_db_path))
+    run_generation_step(
+        "setcode questions",
+        questions,
+        lambda: build_legacy_setcode_questions(
+            cards_db_path,
+            card_pool_json_path,
+        ),
+    )
     run_generation_step("reading questions", questions, lambda: build_reading_questions(card_pool_json_path))
     return questions
 
 
 def parse_args() -> argparse.Namespace:
+    """CLI引数を読み取り、入力DB/JSONと出力先を決める。"""
     parser = argparse.ArgumentParser(description="Generate cards_to_question JSON entries.")
     parser.add_argument("--cards-db", type=Path, default=default_cards_db_path())
     parser.add_argument("--card-pool-json", type=Path, default=default_card_pool_json_path())
@@ -56,13 +72,17 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """質問JSONを生成し、ファイルまたは標準出力へ書き出す。"""
     args = parse_args()
     start_time = time.perf_counter()
 
     log(f"cards database: {args.cards_db}")
     log(f"card pool json: {args.card_pool_json}")
 
-    questions = build_generated_questions(args.cards_db, args.card_pool_json)
+    questions = build_generated_questions(
+        args.cards_db,
+        args.card_pool_json,
+    )
     output = json.dumps(questions, ensure_ascii=False, indent=2)
     elapsed = time.perf_counter() - start_time
 
