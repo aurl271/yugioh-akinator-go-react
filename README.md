@@ -5,6 +5,11 @@
 ユーザーが質問に回答していくと、バックエンドが候補カードの確率を更新し、一定以上の自信度になったカードを回答として提示します。Python/Flaskで作っていた旧版を、ポートフォリオとして説明しやすい構成にするため、GoバックエンドとReact/TypeScriptフロントエンドに分けて作り直しています。
 参考にさせていただいた記事:https://qiita.com/tsukemono/items/2a18e5d307a978e8ab09
 
+## 公開URL
+
+- アプリ: https://yugioh-akinator-go-react.tire135790.workers.dev/
+- Backend API: https://yugioh-akinator-go-react.onrender.com/
+
 ## 技術スタック
 
 - Backend: Go
@@ -12,9 +17,9 @@
 - UI: MUI
 - Database: PostgreSQL
 - DB生成補助: Python
-- 想定デプロイ:
+- デプロイ:
   - Backend: Render
-  - Frontend: Cloudflare Pages
+  - Frontend: Cloudflare Workers
   - Database: Supabase Postgres
 
 ## 主な機能
