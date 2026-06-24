@@ -9,8 +9,6 @@ YugiohAkinator-master.zip
 .codex/
 .agents/
 
-docs/
-
 # Go
 .gocache/
 backend/server
