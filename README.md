@@ -9,6 +9,17 @@
 
 - アプリ: https://yugioh-akinator-go-react.tire135790.workers.dev/
 - Backend API: https://yugioh-akinator-go-react.onrender.com/
+- Health Check: https://yugioh-akinator-go-react.onrender.com/api/health
+
+## スクリーンショット
+
+| 設定 | 質問 |
+| --- | --- |
+| ![推理設定画面](docs/images/screenshot-setup.png) | ![質問画面](docs/images/screenshot-question.png) |
+
+| 確認 | 結果 |
+| --- | --- |
+| ![回答確認画面](docs/images/screenshot-confirm.png) | ![結果画面](docs/images/screenshot-result.png) |
 
 ## 技術スタック
 
