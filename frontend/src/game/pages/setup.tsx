@@ -29,7 +29,7 @@ const difficultyModes: DifficultyMode[] = [
         description: "質問は多めになりますが、途中で少し間違えても立て直しやすい設定です。",
         meta: {
             beta: 1,
-            answerThreshold: 0.9999,
+            answerThreshold: 0.995,
             topCandidatesCount: DEFAULT_TOP_CANDIDATES_COUNT,
         },
     },
