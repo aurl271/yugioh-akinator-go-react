@@ -10,6 +10,11 @@ const (
 	AnswerScoreYes        = 1.0
 )
 
+const (
+	// ExpectedAnswerYes は、GameData.AnswersのValue。
+	ExpectedAnswerYes int = 1
+)
+
 // AnswerScores は NextQuestion が「各回答を選んだら候補がどう分かれるか」を試すための一覧。
 var AnswerScores = []float64{
 	AnswerScoreNo,
@@ -37,20 +42,20 @@ func isValidAnswerScore(answer float64) bool {
 // サーバー起動時にDBから読み込み、リクエストごとにこのデータを使ってEngineを作る。
 type GameData struct {
 	// Cards は推理対象カード。scoresのindexと同じ順番で扱う。
-	Cards        []Card
+	Cards []Card
 	// Questions は出題候補。NextQuestionはこの順に全質問を評価する。
-	Questions    []Question
+	Questions []Question
 	// QuestionByID は回答履歴のquestion idから質問メタ情報を引くためのmap。
 	QuestionByID map[int]Question
 	// Answers は questionID -> cardID -> YES/NO の対応。
 	// mapに存在しないカードは、その質問に対してNOとして扱う。
-	Answers      map[int]map[int64]int
+	Answers map[int]map[int64]int
 }
 
 // Card はcardsテーブル1行に対応する、推理対象カードの情報。
 type Card struct {
 	// ID はDB内部の連番ID。
-	ID        int64
+	ID int64
 	// CardID は遊戯王カード固有のID。answersとの対応にはこちらを使う。
 	CardID    int64
 	Name      string
@@ -67,18 +72,18 @@ type Card struct {
 
 // Question はquestionsテーブル1行に対応する出題候補。
 type Question struct {
-	ID        int
-	Text      string
+	ID   int
+	Text string
 	// Category はscript由来かcards条件由来かを表す。
-	Category  int
+	Category int
 	// Query は旧SQLite実装との互換用。Goの判定では主にConditionを使う。
-	Query     string
+	Query string
 	// Condition はcards由来質問をGoで判定するための構造化条件。
 	Condition *Condition
 	// UnsetBit は現在stateにこのビットが立っていたら質問を出さない、という除外条件。
-	UnsetBit  int
+	UnsetBit int
 	// NewState はYES/Probablyで答えたときにstateへ追加するビット。
-	NewState  int
+	NewState int
 }
 
 // Condition は複数の条件をand/orでまとめる構造。

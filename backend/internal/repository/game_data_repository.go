@@ -271,7 +271,7 @@ func buildAnswers(
 				return nil, err
 			}
 			if matched {
-				answers[question.ID][card.CardID] = 1
+				answers[question.ID][card.CardID] = game.ExpectedAnswerYes
 			}
 		}
 	}
